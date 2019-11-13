@@ -145,3 +145,78 @@ var addInventory = function() {
 
 	});
 };
+// Adds new product to database.
+var addProduct = function() {
+	inquirer.prompt([{
+		name: "product_name",
+		type: "input",
+		message: "What is the product you would like to add?"
+	}, {
+		name: "department_name",
+		type: "input",
+		message: "What is the department for this product?"
+	}, {
+		name: "price",
+		type: "input",
+		message: "What is the price for the product, e.g. 25.00?"
+	}, {
+		name: "stock_quantity",
+		type: "input",
+		message: "How much stock do you have to start with?"
+	}]).then(function(answer) {
+		connection.query("INSERT INTO products SET ?", {
+			product_name: answer.product_name,
+			department_name: answer.department_name,
+			price: answer.price,
+			stock_quantity: answer.stock_quantity
+		}, function(err, res) {
+			if (err) {
+				throw err;
+			} else {
+				console.log("Your product was added successfully!");
+
+				// Checks if department exists.
+				checkIfDepartmentExists(answer.department_name);
+			}
+		});
+	});
+};
+
+// Checks if department exists.
+var checkIfDepartmentExists = function(departmentName) {
+
+	var query = "Select department_name FROM departments";
+	connection.query(query, function(err, res) {
+		if (err) throw err;
+
+		// If deparment already exists, no need to add it.
+		for (var i = 0; i < res.length; i++) {
+			if (departmentName === res[i].department_name) {
+				console.log("This department already exists so no need to add it: " + departmentName);
+				selectAction();
+			}
+		}
+
+		// If department doesn't exist, adds new department. 
+		addNewDepartment(departmentName);
+	});
+};
+
+
+// Adds new department.
+// Nice feature to let both managers and supervisors add departments.
+var addNewDepartment = function(departmentName) {
+	console.log('We will add this new department: ' + departmentName);
+
+	// Adds department to departments table in database.
+	connection.query("INSERT INTO departments SET ?", {
+			department_name: departmentName
+		}, function(err, res) {
+			if (err) {
+				throw err;
+			} else {
+				console.log("New department was added successfully!");
+				selectAction();
+			}
+		});
+};
